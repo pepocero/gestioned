@@ -1,0 +1,46 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Kanit&display=swap');
+
+body {
+    font-size: 10pt;
+}
+
+.titulo {
+    font-family: 'Alfa Slab One', cursive; 
+    font-size: 3vw;
+}
+
+.titulo {
+    font-family: 'Kanit', sans-serif;
+    font-size: 2.5vw;
+}
+
+.imagen_alumno{
+    width: 80px;
+    float:left;
+    clear:left;
+}
+
+/*  PROFILE */
+.fila {
+    text-align: left;
+
+}
+
+.tarjeta {
+    padding: 0 1rem 3rem 2rem;/* top right  bottom    left */
+}
+
+
+h3 {
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+/*  CON ESTO LOGRO HACER QUE LOS INPUT DE SWEETALERT SE COMPORTEN COMO PASSWORD Y NO INTERFIERA CON LOS INPUT DE LOS FILTROS DEL HEADER DE TABULATOR  */
+.secure-input {
+    -webkit-text-security: disc; /* Para navegadores basados en WebKit (Chrome, Safari) */
+    -moz-text-security: disc; /* Para navegadores basados en Gecko (Firefox) */
+    text-security: disc; /* Estándar CSS */
+  }
+  
