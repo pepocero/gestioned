@@ -91,6 +91,8 @@ if($settings->debug > 0){
 	}
 }
 
+userspiceActiveLog($currentPage, $user);
+
 if(isset($_GET['err'])){
 	$err = Input::get('err');
 }
@@ -136,35 +138,17 @@ if(!$user->isLoggedIn()){
 	}
 }
 
-if ($settings->force_ssl==1){
-	$isSecure = false;
-
-	if(
-		isset($_SERVER['HTTPS'])
-		&& $_SERVER['HTTPS'] == 'on')
-		{
-		$isSecure = true;
-	}elseif (
-		!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
-		&& $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'
-		|| !empty($_SERVER['HTTP_X_FORWARDED_SSL'])
-		&& $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on') {
-		$isSecure = true;
-	}
-		if ($isSecure != true) {
-		// if request is not secure, redirect to secure url
-		$url = 'https://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-		Redirect::to($url);
-		exit;
-	}
-
+if ($settings->force_ssl == 1 && !isHTTPSConnection()) {
+    $url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    Redirect::to($url);
+    exit;
 }
 
 // Get html lang attribute, default 'en'
 if(isset($_SESSION['us_lang'])){ $html_lang = substr($_SESSION['us_lang'],0,2);}else{$html_lang = 'en';}
 
 
-if($user->isLoggedIn() && $currentPage != 'user_settings.php' && $user->data()->force_pr == 1){
+if($user->isLoggedIn() && $currentPage != 'user_settings.php' && $currentPage != 'logout.php' && $user->data()->force_pr == 1){
 	$resetMsg = lang("VER_PLEASE");
 	usError($resetMsg);
 	Redirect::to($us_url_root.'users/user_settings.php');

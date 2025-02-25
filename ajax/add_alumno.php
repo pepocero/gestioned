@@ -1,7 +1,7 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT']."/_root.php";
 require_once $_SERVER['DOCUMENT_ROOT'].$root."/users/init.php";
-//require_once $abs_us_root.$us_url_root.'users/includes/template/prep.php';
+require_once $abs_us_root.$us_url_root.'users/includes/template/prep.php';
 if (!securePage($_SERVER['PHP_SELF'])){die();}
 
 $userId = $user->data()->id;
@@ -9,40 +9,53 @@ $userId = $user->data()->id;
 if (Input::exists()) {   
 
     //---------------------------------------------------------------------------------
-        //INGRESAR ALUMNOS
-    $datos = json_decode(file_get_contents("php://input"), true); //Recibe el Json del formulario de alumnos_ingreso.php
-    $control = $datos['control'];//Obtiene el dato de control
+    //INGRESAR UN NUEVO ALUMNO
     
-   
+    $nombre = Input::get('Nombre');
+    $apellido = Input::get('Apellido');
+    $dni = Input::get('DNI');
+    $fecha_nac = Input::get('Fecha_Nac');
+    $ciudad_origen = Input::get('Ciudad_Origen');
+    $ciudad_residencia = Input::get('Ciudad_Residencia');
+    $direccion = Input::get('Direccion');
+    $cp = Input::get('CP');
+    $telefono = Input::get('Telefono');
+    $telefono_contacto = Input::get('Telefono_Contacto');
+    $vinculo = Input::get('Vinculo');
+    $email = Input::get('email');        
+    $datos_adicionales = Input::get('Datos_Adicionales');
+    
 
-        $camposFijos = array();
-        $camposFijos['iduser'] = $userId;
-        //agregar datos fijos al array
-        foreach ($datos as $key => $value) {
-            if($key == "Nombre"){
-                $camposFijos[$key] = $value;
-            }elseif($key == "Apellido"){
-                $camposFijos[$key] = $value;
-            }elseif($key == "Direccion"){
-                $camposFijos[$key] = $value;
-            }elseif($key == "Dni"){
-                $camposFijos[$key] = $value;
-            } 
-        }
-        $db->insert('aa_alumnos',$camposFijos);
-
-        // Obtener el ID del último registro insertado
-        $ultimo_id = $db->lastId(); 
-        $tabla ="alumnos";     
-        foreach ($datos as $key => $value) {
-            if($key != "Nombre" && $key != "Apellido" && $key != "Direccion" && $key != "Dni"){                
-                $db->insert("aa_campos_alumnos", ["iduser"=>$userId, "idAlumno"=>$ultimo_id, "campo"=>$key, "dato"=>$value]);                
-            } 
-        }
-
-        echo"Alumno ingresado correctamente";
-
+    $db->insert("aa_alumnos", [
+        "iduser" => $userId,
+        "Nombre" => $nombre,
+        "Apellido" => $apellido,
+        "Dni" => $dni,
+        "Fecha_Nacimiento" => $fecha_nac,
+        "Ciudad_Origen" => $ciudad_origen,
+        "Ciudad_Residencia" => $ciudad_residencia,
+        "Direccion" => $direccion,
+        "CP" => $cp,
+        "Telefono" => $telefono,
+        "Telefono_Contacto" => $telefono_contacto,
+        "Vinculo" => $vinculo,
+        "Email" => $email,          
+        "Datos_Adicionales" => $datos_adicionales
+        
+    ]);
         
     }
 
 ?>
+
+<script>
+    Swal.fire({
+        title: "Atención",
+        text: "Alumno dado de alta correctamente",
+        icon:"success"})
+    .then(function(){
+                //redirigir a ../php/alumnos_ingreso.php
+                window.location.href = "../php/alumnos_ingreso.php";
+            }
+    );
+</script>

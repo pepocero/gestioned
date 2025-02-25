@@ -16,7 +16,7 @@ $userId = $user->data()->id;
 
 
 <div class="container col d-flex justify-content-center">
-  <p style="font-family: 'Alfa Slab One', cursive; font-size: 3vw;"> Crear Materias</p>
+  <p style="font-family: 'Alfa Slab One', cursive; font-size: 3vw;"> Crear / Editar Materias</p>
 </div>
 
 <div class="container col d-flex justify-content-center">

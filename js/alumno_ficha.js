@@ -1,82 +1,17 @@
-//Funcion para poner bien los acentos
-function decodeHtml(html) {
-    var txt = document.createElement("textarea");
-    txt.innerHTML = html;
-    return txt.value;
-  }
 
-
-  function generarTarjeta(datos) {
-    var tarjeta = $('<div class="card rounded-5 col-md-4 mx-auto tarjeta shadow-lg p-3 mb-5 bg-body rounded"></div>');
-  
-    // Agregar imagen de perfil
-    var imagenPerfil = $('<img class="card-img-top rounded-circle imagen_alumno mx-auto mt-3" src="../images/user.png' + '" alt="Imagen de perfil">');
-    tarjeta.append(imagenPerfil);
-  
-    var camposDinamicos = {};
-  
-    // Iterar sobre los datos y agrupar los campos dinámicos
-    $.each(datos, function(index, item) {
-      var campo = decodeHtml(item.campo);
-      var valor = decodeHtml(item.dato);
-  
-      // Saltar los campos estáticos
-      if (campo === 'Nombre' || campo === 'Apellido' || campo === 'Direccion' || campo === 'Dni') {
-        return;
-      }
-  
-      // Agrupar los campos dinámicos
-      if (!camposDinamicos.hasOwnProperty(campo)) {
-        camposDinamicos[campo] = [];
-      }
-      camposDinamicos[campo].push(valor);
-    });
-  
-    // Agregar los campos estáticos a la tarjeta
-    var filaDatosFijos = $('<div class="row fila"></div>');
-    filaDatosFijos.append('<div class="col fw-bold h1 text-center">' + decodeHtml(datos[0].Nombre) + ' ' + decodeHtml(datos[0].Apellido) + '</div>');
-    //filaDatosFijos.append('<div class="col fw-bold">Apellido:</div><div class="col fst-italic">' + decodeHtml(datos[0].Apellido) + '</div>');
-    filaDatosFijos.append('<div class="row fila"></div>');
-    filaDatosFijos.append('<div class="col fw-bold">Dni:</div><div class="col fst-italic">' + decodeHtml(datos[0].Dni) + '</div>');
-    filaDatosFijos.append('<div class="col fw-bold">Direccion:</div><div class="col fst-italic">' + decodeHtml(datos[0].Direccion) + '</div>');
-    tarjeta.append(filaDatosFijos);
-  
-    // Agregar los campos dinámicos a la tarjeta
-    $.each(camposDinamicos, function(campo, valores) {
-      var fila = $('<div class="row fila"></div>');
-      var etiqueta = $('<div class="col fw-bold"></div>').text(campo + ": ");
-      var valorCampo = $('<div class="col fst-italic"></div>').text(valores.join(", "));
-  
-      fila.append(etiqueta).append(valorCampo);
-      tarjeta.append(fila);
-    });
-  
-    return tarjeta;
-  }
-  
-  
-  
-
-
-
-// Obtener el JSON con AJAX y generar la tarjeta
-$.ajax({
-    url: '../ajax/alumno_ficha.php',
-    type: 'GET',
-    data: { idAlumno: idAlumno },
-    dataType: 'json',
-    success: function(data) {
-        // Decodificar el JSON recibido
-        console.log(data);
-        data = JSON.parse(decodeURIComponent(JSON.stringify(data)));
-        var tarjeta = generarTarjeta(data);
-        $('#contenedor-tarjeta').append(tarjeta);
-    },
-    error: function(xhr, status, error) {
-      console.log("Error al obtener el JSON: " + error);
-    }
-  });
-
+// Inicializa TinyMCE para el textarea con id "Datos_Adicionales" con el valor de la consulta MySQL
+/*
+tinymce.init({
+  selector: '#Datos_Adicionales',  
+  toolbar: 'undo redo | bold italic underline strikethrough |',  // Define la barra de herramientas sin las opciones que deseas quitar
+  menubar: false,  // Opcional: oculta la barra de menú de TinyMCE
+  height: 200,  // Altura del editor en pixeles
+  width: 600,  // Ancho del editor en pixeles
+  lineheight_formats: '1', // Establece los valores deseados
+  spellchecker: false, // Desactiva la corrección ortográfica
+  ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),  
+});
+*/
 let control = "";
 
 //EDITOR PARA LAS NOTAS
@@ -524,3 +459,24 @@ fetch("../ajax/ajax.php", {
             document.getElementById("form_analitico").submit();
           }
   });
+
+  //BOTON VER DATOS ADICIONALES QUE CAMBIE EL TEXTO DEL BOTON DEPENDIENDO DE SI SE ACTIVA EL COLLAPSE O NO
+  document.addEventListener('DOMContentLoaded', function() {
+    var botonMostrarDatos = document.getElementById('btnMostrarDatos');
+    var datosCollapse = document.getElementById('collapseAdicionales');
+
+    datosCollapse.addEventListener('show.bs.collapse', function () {
+        botonMostrarDatos.textContent = 'Ocultar Datos Adicionales';
+    });
+
+    datosCollapse.addEventListener('hide.bs.collapse', function () {
+        botonMostrarDatos.textContent = 'Mostrar Datos Adicionales';
+    });
+});
+
+
+// Initialize Quill editor 
+
+const quill = new Quill('#editor', {
+  theme: 'snow'
+});

@@ -126,11 +126,13 @@ if (!function_exists('money')) {
 if (!function_exists('display_errors')) {
   function display_errors($errors = [])
   {
+    $display = [];
     foreach ($errors as $k => $v) {
       if (array_key_exists($errors[$k][1], $errors)) {
         unset($errors[$k][1]);
       }
     }
+
     sessionValMessages($errors);
   }
 }
@@ -150,7 +152,7 @@ if (!function_exists('display_successes')) {
 if (!function_exists('email')) {
   function email($to, $subject, $body, $opts = [], $attachment = null)
   {
-    global $abs_us_root, $us_url_root;
+    global $db, $abs_us_root, $us_url_root;
 
     /*
     As of v5.6, $to can now be an array of email addresses
@@ -162,13 +164,12 @@ if (!function_exists('email')) {
     'bcc'   => 'bcc@example.com'
   );
   */
-    $db = DB::getInstance();
-    $query = $db->query('SELECT * FROM email');
-    $results = $query->first();
+    $results = $db->query('SELECT * FROM email')->first();
 
     $mail = new PHPMailer();
     $mail->CharSet = 'UTF-8';
     $mail->SMTPDebug = $results->debug_level;               // Enable verbose debug output
+    $mail->XMailer = null;
     if ($results->isSMTP == 1) {
       $mail->isSMTP();
     }             // Set mailer to use SMTP
@@ -177,11 +178,11 @@ if (!function_exists('email')) {
     $mail->Username = $results->email_login;                 // SMTP username
     $mail->Password = html_entity_decode($results->email_pass);    // SMTP password
     $mail->SMTPSecure = $results->transport;                 // Enable TLS encryption, `ssl` also accepted
-    $mail->Port = $results->smtp_port; 
-    if($results->authtype != ""){
-      $mail->AuthType = $results->authtype; 
-    }                      
- 
+    $mail->Port = $results->smtp_port;
+    if ($results->authtype != "") {
+      $mail->AuthType = $results->authtype;
+    }
+
 
     if ($attachment != false) {
       $mail->addAttachment($attachment);
@@ -240,10 +241,20 @@ if (!function_exists('email_body')) {
   }
 }
 
+
 //preformatted var_dump function
 if (!function_exists('dump')) {
-  function dump($var, $adminOnly = false, $localhostOnly = false)
+  function dump($var, $adminOnly = false, $localhostOnly = false, $fromdnd = false)
   {
+    if (isDebugModeActive() && !$fromdnd) {
+      $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
+
+      echo '<pre>';
+      echo "File: <span style=\"font-weight:bold\">" . $trace[0]["file"] . "</span><br>";
+      echo "Line: <span style=\"font-weight:bold\">" . $trace[0]["line"] . "</span><br>";
+      echo '</pre>';
+    }
+
     if ($adminOnly && isAdmin() && !$localhostOnly) {
       echo '<pre>';
       var_dump($var);
@@ -267,11 +278,36 @@ if (!function_exists('dump')) {
   }
 }
 
+if (!function_exists("isDebugModeActive")) {
+  function isDebugModeActive()
+  {
+    global $settings, $user;
+    if (isset($settings->debug) && $settings->debug > 0) {
+      if ($settings->debug == 2 || ($settings->debug == 1 && isUserLoggedIn() && $user->data()->id == 1)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+}
+
 //preformatted dump and die function
 if (!function_exists('dnd')) {
   function dnd($var, $adminOnly = false, $localhostOnly = false)
   {
-    dump($var, $adminOnly, $localhostOnly);
+
+    if (isDebugModeActive()) {
+      $trace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
+
+      echo '<pre>';
+      echo "File: <span style=\"font-weight:bold\">" . $trace[0]["file"] . "</span><br>";
+      echo "Line: <span style=\"font-weight:bold\">" . $trace[0]["line"] . "</span><br>";
+      echo '</pre>';
+    }
+    dump($var, $adminOnly, $localhostOnly, true);
     die();
   }
 }
@@ -352,3 +388,135 @@ if (!function_exists('safefilerewrite')) {
     }
   }
 }
+
+
+function getLangFilesStoragePath() {
+    global $abs_us_root, $us_url_root;
+    return $abs_us_root . $us_url_root . 'usersc/scripts/langFiles.json';
+}
+
+function spiceUpdateBegins() {
+    global $abs_us_root, $us_url_root, $settings, $user, $db, $config;
+
+    // Include external script if it exists
+    $beginsScript = $abs_us_root . $us_url_root . 'usersc/scripts/spice_update_begins.php';
+    if (file_exists($beginsScript)) {
+        include $beginsScript;
+    }
+    
+    // Proceed only if language purge is not disabled
+    if (!isset($no_language_purge) || !$no_language_purge) {
+        $langPath = $abs_us_root . $us_url_root . 'users/lang/*.php';
+        $langFiles = glob($langPath);
+        
+        // Define the storage path for language files list
+        $storagePath = getLangFilesStoragePath();
+        
+        // Convert the file paths to a JSON array
+        $langFilesJson = json_encode($langFiles, JSON_PRETTY_PRINT);
+        
+        // Attempt to write the JSON data to the storage file
+        if (file_put_contents($storagePath, $langFilesJson) === false) {
+            usError("Failed to write language files list to {$storagePath}. Language cleanup will not happen.");
+ 
+
+        } 
+    }
+}
+
+function spiceUpdateSuccess() {
+    global $abs_us_root, $us_url_root, $settings, $user, $db;
+    
+    // Include external script if it exists
+    $successScript = $abs_us_root . $us_url_root . 'usersc/scripts/spice_update_success.php';
+    if (file_exists($successScript)) {
+        include $successScript;
+    }
+    
+ 
+    if (!isset($no_language_purge) || !$no_language_purge) {
+    
+        $storagePath = getLangFilesStoragePath();
+        
+        // Check if the storage file exists
+        if (file_exists($storagePath)) {
+            // Read the JSON data from the storage file
+            $storedLangFilesJson = file_get_contents($storagePath);
+            if ($storedLangFilesJson === false) {
+                usError("Failed to read language files list from {$storagePath}. Skipping language cleanup.");
+  
+                return;
+            }
+            
+            // Decode the JSON data into an array
+            $storedLangFiles = json_decode($storedLangFilesJson, true);
+            if (!is_array($storedLangFiles)) {
+              usError("Invalid JSON format in {$storagePath}. Skipping language cleanup.");
+    
+                return;
+            }
+            
+            // Verify that there is at least one PHP file in the stored list
+            $hasPhpFiles = false;
+            foreach ($storedLangFiles as $file) {
+                if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'php') {
+                    $hasPhpFiles = true;
+                    break;
+                }
+            }
+            
+            if ($hasPhpFiles) {
+                $currentLangPath = $abs_us_root . $us_url_root . 'users/lang/*.php';
+                $currentLangFiles = glob($currentLangPath);
+                
+                foreach ($currentLangFiles as $file) {
+                    // If the current file was not in the stored list, attempt to delete it
+                    if (!in_array($file, $storedLangFiles)) {
+                        if (unlink($file)) {
+                            
+                        } 
+                        
+                    }
+                }
+            } else {
+              usError("No PHP language files found in the stored list. Skipping language cleanup.");
+            
+            }
+            
+            // Remove the storage file after processing
+            if (!unlink($storagePath)) {
+                usError("Failed to delete storage file: {$storagePath}");
+          
+  
+            } 
+
+        } else {
+            usError("Storage file {$storagePath} does not exist. Skipping language cleanup.");
+   
+        }
+    }
+}
+
+function spiceUpdateFail() {
+    global $abs_us_root, $us_url_root, $settings, $user, $db;
+    
+    // Include external script if it exists
+    $failScript = $abs_us_root . $us_url_root . 'usersc/scripts/spice_update_fail.php';
+    if (file_exists($failScript)) {
+        include $failScript;
+    }
+    
+    // Define the storage path for language files list
+    $storagePath = getLangFilesStoragePath();
+    
+    // Attempt to delete the storage file to clean up
+    if (file_exists($storagePath)) {
+        if (!unlink($storagePath)) {
+            usError("Failed to delete storage file after update failure: {$storagePath}");
+        } 
+    }
+    if(file_exists($abs_us_root . $us_url_root . "usupdate.zip")){
+      unlink($abs_us_root . $us_url_root . "usupdate.zip");
+    }
+}
+

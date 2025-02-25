@@ -4,6 +4,10 @@ $( document ).ready(function() {
 });
 
 let aux = '';
+//Obtener el valor de la variable php userId
+let id = "<?php echo $userId; ?>";
+
+
 document.getElementById("select-stats").innerHTML = 'Seleccione un alumno de la tabla';
 
  //ESTO PREVIENE LA SELECCION DEL TEXTO AL HACER DOBLE CLIC
@@ -22,6 +26,7 @@ document.getElementById("select-stats").innerHTML = 'Seleccione un alumno de la 
 
 
 
+
 //BUSCAR ALUMNO SCRIPTS
 document.getElementById("select-stats").innerHTML = 'Seleccione un alumno de la tabla';
 
@@ -30,6 +35,7 @@ document.getElementById("select-stats").innerHTML = 'Seleccione un alumno de la 
 //TABLA TABULATOR BUSCAR ALUMNO-------------------------------------------------------
 var table = new Tabulator("#example-table", {
 ajaxURL:"../ajax/ver_alumnos.php", //ajax URL
+ajaxParams:{key1:"value1", key2:"value2"}, //ajax parameters
 layout:"fitDataFill",
 selectable:true, //make rows selectable
 selectableRangeMode:"click",

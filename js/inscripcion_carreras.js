@@ -9,13 +9,14 @@ var tabla_carreras = new Tabulator("#tabla_carreras", {
   ajaxURL: "../ajax/get_carreras.php",
   //ajaxConfig:"POST", //ajax HTTP request type
   //ajaxParams: {id:id, control:"t_equi"},
+  selectable:true, //make rows selectable
+  selectableRows:true,
+  selectableRangeMode:"click",  
   minHeight:250, //do not let table get smaller than 250 px heigh
   layout:"fitColumns",
   pagination:"local",
   paginationSize:10,
   paginationSizeSelector:[12, 24, 36, true],
-  selectable:true, //make rows selectable
-  selectableRangeMode:"click",
   columns:[
       {title:"Carrera", field:"carrera", formatter:"html", width:400, headerFilter:"input"},
       
@@ -30,7 +31,8 @@ var tabla_alumnos = new Tabulator("#tabla_alumnos", {
   minHeight:250, //do not let table get smaller than 250 px heigh
   layout:"fitColumns",
   selectable:true, //make rows selectable
-  selectableRangeMode:"click",
+  selectableRows:true,
+  selectableRangeMode:"click",  
   pagination:"local",
   paginationSize:10,
   paginationSizeSelector:[15, 20, 30, 50, true],
@@ -124,7 +126,8 @@ var table = new Tabulator("#tabla_incripcion", {
   //paginationSize:10,
   //paginationSizeSelector:[12, 24, 36, true],
   selectable:true, //make rows selectable
-  selectableRangeMode:"click",
+  selectableRows:true,
+  selectableRangeMode:"click",  
   placeholder:"No hay datos para mostrar",
   columns:[
       {title:"Carrera", field:"carrera", formatter:"html", width:400, headerFilter:"input"},

@@ -1,4 +1,5 @@
 <?php
+define('USERSPICE_ACTIVE_LOGGING', false);
 require_once 'classes/class.autoloader.php';
 session_start();
 
@@ -25,7 +26,7 @@ require_once $abs_us_root.$us_url_root.'users/helpers/helpers.php';
 // Set config
 $GLOBALS['config'] = array(
 	'mysql'      => array(
-'host'         => 'localhost; port=3306',
+'host'         => 'localhost',
 'username'     => 'root',
 'password'     => '',
 'db'           => 'gestioned',

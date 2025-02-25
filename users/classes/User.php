@@ -101,6 +101,9 @@ class User
     {
         if (!$username && !$password && $this->exists()) {
             Session::put($this->_sessionName, $this->data()->id);
+            $date = date('Y-m-d H:i:s');
+			$this->_db->query('UPDATE users SET last_login = ?, logins = logins + 1 WHERE id = ?', [$date, $this->data()->id]);
+			$_SESSION['last_confirm'] = date('Y-m-d H:i:s');
         } else {
             $user = $this->find($username);
             if ($user) {
@@ -121,7 +124,7 @@ class User
                     $date = date('Y-m-d H:i:s');
                     $this->_db->query('UPDATE users SET last_login = ?, logins = logins + 1 WHERE id = ?', [$date, $this->data()->id]);
                     $_SESSION['last_confirm'] = date('Y-m-d H:i:s');
-                    $this->_db->insert('logs', ['logdate' => $date, 'user_id' => $this->data()->id, 'logtype' => 'Login', 'lognote' => 'User logged in.', 'ip' => $_SERVER['REMOTE_ADDR']]);
+                    $this->_db->insert('logs', ['logdate' => $date, 'user_id' => $this->data()->id, 'logtype' => 'Login', 'lognote' => 'User logged in.', 'ip' => ipCheck()]);
                     $ip = ipCheck();
                     $q = $this->_db->query('SELECT id FROM us_ip_list WHERE ip = ?', [$ip]);
                     $c = $q->count();
@@ -129,12 +132,14 @@ class User
                         $this->_db->insert('us_ip_list', [
                             'user_id' => $this->data()->id,
                             'ip' => $ip,
+                            'timestamp' => date('Y-m-d H:i:s'),
                         ]);
                     } else {
                         $f = $q->first();
                         $this->_db->update('us_ip_list', $f->id, [
                             'user_id' => $this->data()->id,
                             'ip' => $ip,
+                            'timestamp' => date('Y-m-d H:i:s'),
                         ]);
                     }
 
@@ -146,15 +151,36 @@ class User
         return false;
     }
 
-    public function loginEmail($email = null, $password = null, $remember = false)
-    {
+    public function loginEmail($email = null, $password = null, $remember = false, $rawpassword = null)
+    {   
+        $success = false;
         if (!$email && !$password && $this->exists()) {
             Session::put($this->_sessionName, $this->data()->id);
         } else {
             $user = $this->find($email, 1);
-
+           
             if ($user) {
-                if (password_verify($password, $this->data()->password)) {
+                $strength = substr($this->data()->password, 4, 2);
+                if(!is_numeric($strength)){
+                    $strength = 999;
+                }
+       
+                if(password_verify($password, $this->data()->password)){
+                    $success = true;
+                //UserSpice passwords were hashed with a cost of 10, then 12, so we're going to use this to update both the hash strength and deal with passwords that were corrupted because of the Input::sanitize function.
+                }elseif(!is_null($rawpassword) && $strength < 13){
+                    if(password_verify(Input::sanitize($rawpassword,true,true), $this->data()->password)){
+                        $success = true;
+                    }
+                }
+                
+                if ($success) {
+                    if($strength < 13){
+                        //deal with custom login forms that do not properly pass the password
+                        if($rawpassword != null && $rawpassword != ""){
+                            $this->_db->update('users', $this->data()->id, ['password' => password_hash(Input::sanitize($rawpassword), PASSWORD_BCRYPT, ['cost' => 13])]);
+                        }             
+                    }
                     Session::put($this->_sessionName, $this->data()->id);
 
                     if ($remember) {
@@ -172,20 +198,23 @@ class User
                     $date = date('Y-m-d H:i:s');
                     $this->_db->query('UPDATE users SET last_login = ?, logins = logins + 1 WHERE id = ?', [$date, $this->data()->id]);
                     $_SESSION['last_confirm'] = date('Y-m-d H:i:s');
-                    $this->_db->insert('logs', ['logdate' => $date, 'user_id' => $this->data()->id, 'logtype' => 'login', 'lognote' => 'User logged in.', 'ip' => $_SERVER['REMOTE_ADDR']]);
                     $ip = ipCheck();
+                    $this->_db->insert('logs', ['logdate' => $date, 'user_id' => $this->data()->id, 'logtype' => 'login', 'lognote' => 'User logged in.', 'ip' => $ip]);
+                    
                     $q = $this->_db->query('SELECT id FROM us_ip_list WHERE ip = ?', [$ip]);
                     $c = $q->count();
                     if ($c < 1) {
                         $this->_db->insert('us_ip_list', [
                             'user_id' => $this->data()->id,
                             'ip' => $ip,
+                            'timestamp' => date('Y-m-d H:i:s'),
                         ]);
                     } else {
                         $f = $q->first();
                         $this->_db->update('us_ip_list', $f->id, [
                             'user_id' => $this->data()->id,
                             'ip' => $ip,
+                            'timestamp' => date('Y-m-d H:i:s'),
                         ]);
                     }
 
@@ -224,7 +253,7 @@ class User
             } else {
                 //If a user has neither UserSpice nor oAuth creds
                 //die("user has neither");
-                //$password = password_hash(Token::generate(),PASSWORD_BCRYPT,array('cost' => 12));
+                //$password = password_hash(Token::generate(),PASSWORD_BCRYPT,array('cost' => 13));
                 $settings = $this->_db->query('SELECT * FROM settings')->first();
                 $username = $email;
 

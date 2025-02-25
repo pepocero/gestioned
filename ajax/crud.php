@@ -53,6 +53,7 @@ if (Input::exists()) {
         if($control == "update_materia_name"){
             $id = Input::get('id');
             $cellValue = Input::get('cellValue');
+            $cellValue = urldecode($cellValue); // Decodificar caracteres especiales
             
             $db->update("aa_materias", $id, ["materia"=>$cellValue]);       
             
@@ -67,6 +68,13 @@ if (Input::exists()) {
             $db->update("aa_materias", $id, ["anio"=>$cellValue]);       
             
         }
+    //---------------------------------------------------------------------------------
+    //BORRAR MATERIA
+    if($control == "delete_materia"){
+        $id_materia = Input::get('idMateria');
+        $db->deleteById("aa_materias", $id_materia);
+    }
+
     //---------------------------------------------------------------------------------
     //CREAR CAMPO ALUMNOS
     if($control == "add_campo_alumnos"){
@@ -221,7 +229,7 @@ if (Input::exists()) {
         }
 
          //---------------------------------------------------------------------------------
-        //ACTUALIZAR EL PROFESOR EN LA TABLA CUATRIMESTRES
+        //ACTUALIZAR CONDICION EN LA TABLA CUATRIMESTRES
         if($control == "update_condicion_cuatri"){
             $idCondicion = Input::get('idCondicion');
             $id = Input::get('id');
@@ -259,9 +267,75 @@ if (Input::exists()) {
         }
 
 
+        //EDITAR ALUMNO -------------------------------------------------------------------------
+        if($control == "edit_alumno"){
+
+            $idAlumno = Input::get('idAlumno');
+            $Nombre = Input::get('Nombre');
+            $Apellido = Input::get('Apellido');
+            $Dni = Input::get('Dni');
+            $Fecha_Nac = Input::get('Fecha_Nac');
+            $Ciudad_Origen = Input::get('Ciudad_Origen');
+            $Ciudad_Residencia = Input::get('Ciudad_Residencia');
+            $Direccion = Input::get('Direccion');
+            $CP = Input::get('CP');
+            $Telefono = Input::get('Telefono');
+            $Telefono_Contacto = Input::get('Telefono_Contacto');
+            $Vinculo = Input::get('Vinculo');
+            $Email = Input::get('email');
+            $Datos_Adicionales = Input::get('Datos_Adicionales');
+
+        $db->query("UPDATE aa_alumnos SET 
+        Nombre = '$Nombre',
+        Apellido = '$Apellido',
+        Dni = '$Dni',
+        Fecha_Nacimiento = '$Fecha_Nac',
+        Ciudad_Origen = '$Ciudad_Origen',
+        Ciudad_Residencia = '$Ciudad_Residencia',
+        Direccion = '$Direccion',
+        CP = '$CP',
+        Telefono = '$Telefono',
+        Telefono_Contacto = '$Telefono_Contacto',
+        Vinculo = '$Vinculo',
+        Email = '$Email', 
+        Datos_Adicionales = '$Datos_Adicionales' 
+        WHERE id = $idAlumno AND iduser = $userId");
+        
+        Redirect::to("../php/alumno_ficha.php?idAlumno=".$idAlumno);
+        }
 
 
+        //edit_profesor
+        if($control == "edit_profesor"){
 
+            $idProfe = Input::get('idProfe');
+            $Dni = Input::get('Dni');
+            $Fecha_Nac = Input::get('Fecha_Nac');
+            $Ciudad_Origen = Input::get('Ciudad_Origen');
+            $Ciudad_Residencia = Input::get('Ciudad_Residencia');
+            $Direccion = Input::get('Direccion');
+            $CP = Input::get('CP');
+            $Telefono = Input::get('Telefono');
+            $Telefono_Contacto = Input::get('Telefono_Contacto');
+            $Vinculo = Input::get('Vinculo');
+            $Email = Input::get('email');
+            $Datos_Adicionales = Input::get('Datos_Adicionales');
+
+        $db->query("UPDATE aa_profesores SET Dni = '$Dni',
+        Fecha_Nacimiento = '$Fecha_Nac',
+        Ciudad_Origen = '$Ciudad_Origen',
+        Ciudad_Residencia = '$Ciudad_Residencia',
+        Direccion = '$Direccion',
+        CP = '$CP',
+        Telefono = '$Telefono',
+        Telefono_Contacto = '$Telefono_Contacto',
+        Vinculo = '$Vinculo',
+        Email = '$Email', 
+        Datos_Adicionales = '$Datos_Adicionales' 
+        WHERE id = $idProfe AND iduser = $userId");
+        
+        Redirect::to("../php/profesor_ficha.php?idProfe=".$idProfe);
+        }
 
 
 }//Fin Input Exists
